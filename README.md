@@ -24,11 +24,14 @@ pip3 install -r  requirements.txt
 ```bash
 python3 read_serial.py
 ```
+![Serial Demo](./gifs/serial.gif)
 
 *plot_targets.py* plots the received data from the sensor (x, y) of three targets:
 ```bash
 python3 plot_targets.py
 ```
+![Distance Demo](./gifs/distance_plot.gif)
+
 
 ## Troubleshooting
 - Check that the USB to TTL adapter is connected to the correct port:
