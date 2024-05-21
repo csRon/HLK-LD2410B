@@ -14,6 +14,7 @@ def send_command(ser:serial.Serial,
     Send a command to the radar
     Parameters:
     - ser (serial.Serial): the serial port object
+    - intra_frame_length (bytes): the intra frame length
     - command_word (bytes): the command word
     - command_value (bytes): the command value
     Returns:
