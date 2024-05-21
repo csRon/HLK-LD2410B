@@ -1,5 +1,106 @@
 import serial
 
+command_header = bytes.fromhex('FD FC FB FA')
+command_tail = bytes.fromhex('04 03 02 01')
+
+report_header = bytes.fromhex('F4 F3 F2 F1')
+report_tail = bytes.fromhex('F8 F7 F6 F5')
+
+def send_command(ser:serial.Serial, 
+                 intra_frame_length:bytes,
+                 command_word:bytes, 
+                 command_value:bytes)->bytes:
+    '''
+    Send a command to the radar
+    Parameters:
+    - ser (serial.Serial): the serial port object
+    - command_word (bytes): the command word
+    - command_value (bytes): the command value
+    Returns:
+    - response (bytes): the response from the radar
+    '''
+    # Create the command
+    command = command_header + intra_frame_length + command_word + command_value + command_tail
+    print(command)
+    ser.write(command)
+    response = ser.read_until(command_tail)
+    return response
+
+def enable_configuration_mode(ser:serial.Serial)->bool:
+    '''
+    Set the radar to configuration mode
+    Parameters:
+    - ser (serial.Serial): the serial port object
+    Returns:
+    - success (bool): True if the configuration mode was successfully enabled, False otherwise
+    '''
+    intra_frame_length = int(4).to_bytes(2, byteorder='little', signed=True)
+    command_word = bytes.fromhex('FF 00')
+    command_value = bytes.fromhex('01 00')
+
+    response = send_command(ser, intra_frame_length, command_word, command_value)
+    success_int = int.from_bytes(response[8:10], byteorder='little', signed=True)
+    if success_int==0 or success_int==128 or success_int==32896 or success_int==32928:
+        return True
+    else:
+        return False
+    
+def end_configuration_mode(ser:serial.Serial)->bool:
+    '''
+    End the configuration mode
+    Parameters:
+    - ser (serial.Serial): the serial port object
+    Returns:
+    - success (bool): True if the configuration mode was successfully ended, False otherwise
+    '''
+    intra_frame_length = int(2).to_bytes(2, byteorder='little', signed=False)
+    command_word = bytes.fromhex('FE 00')
+    command_value = bytes.fromhex('')
+
+    response = send_command(ser, intra_frame_length, command_word, command_value)
+    success_int = int.from_bytes(response[8:10], byteorder='little', signed=False)
+    if success_int==0:
+        return True
+    else:
+        return False
+
+def enable_engineering_mode(ser:serial.Serial)->bool:
+    '''
+    Enable engineering mode
+    Parameters:
+    - ser (serial.Serial): the serial port object
+    Returns:
+    - success (bool): True if the engineering mode was successfully enabled, False otherwise
+    '''
+    intra_frame_length = int(2).to_bytes(2, byteorder='little', signed=False)
+    command_word = bytes.fromhex('62 00')
+    command_value = bytes.fromhex('')
+
+    response = send_command(ser, intra_frame_length, command_word, command_value)
+    success_int = int.from_bytes(response[8:10], byteorder='little', signed=False)
+    if success_int==0:
+        return True
+    else:
+        return False
+
+def close_engineering_mode(ser:serial.Serial)->bool:
+    '''
+    Close engineering mode
+    Parameters:
+    - ser (serial.Serial): the serial port object
+    Returns:
+    - success (bool): True if the engineering mode was successfully closed, False otherwise
+    '''
+    intra_frame_length = int(2).to_bytes(2, byteorder='little', signed=False)
+    command_word = bytes.fromhex('63 00')
+    command_value = bytes.fromhex('')
+
+    response = send_command(ser, intra_frame_length, command_word, command_value)
+    success_int = int.from_bytes(response[8:10], byteorder='little', signed=False)
+    if success_int==0:
+        return True
+    else:
+        return False
 
 def read_basic_mode(serial_port_line:bytes)->tuple[6]:
     '''
@@ -60,74 +161,3 @@ def read_basic_mode(serial_port_line:bytes)->tuple[6]:
     # if the header and tail are not present the line is corrupted
     else: 
         return None
-
-def enable_configuration_mode(ser:serial.Serial)->bool:
-    '''
-    Set the radar to configuration mode
-    Parameters:
-    - ser (serial.Serial): the serial port object
-    Returns:
-    - success (bool): True if the configuration mode was successfully enabled, False otherwise
-    '''
-    ser.write(bytes.fromhex('FD FC FB FA 04 00 FF 00 01 00 04 03 02 01'))
-
-    response = ser.read_until(bytes.fromhex('04 03 02 01'))
-    if int.from_bytes(response[8:10], byteorder='little', signed=False)==0:
-        return True
-    else:
-        return False
-    
-def end_configuration_mode(ser:serial.Serial)->bool:
-    '''
-    End the configuration mode
-    Parameters:
-    - ser (serial.Serial): the serial port object
-    Returns:
-    - success (bool): True if the configuration mode was successfully ended, False otherwise
-    '''
-    ser.write(bytes.fromhex('FD FC FB FA 02 00 FE 00 04 03 02 01'))
-    response = ser.read_until(bytes.fromhex('04 03 02 01'))
-    if int.from_bytes(response[8:10], byteorder='little', signed=False)==0:
-        return True
-    else:
-        return False
-
-def read_current_configuration(ser:serial.Serial)->bool:
-    '''
-    Read the current configuration of the radar
-    Parameters:
-    - ser (serial.Serial): the serial port object
-    Returns:
-    - success (bool): True if the configuration was successfully read, False otherwise
-    '''
-    ser.write(bytes.fromhex('FD FC FB FA 02 00 61 00 04 03 02 01'))  
-
-def enable_engineering_mode(ser:serial.Serial)->bool:
-    '''
-    Enable engineering mode
-    Parameters:
-    - ser (serial.Serial): the serial port object
-    Returns:
-    - success (bool): True if the engineering mode was successfully enabled, False otherwise
-    '''
-    ser.write(bytes.fromhex('FD FC FB FA 02 00 62 00 04 03 02 01'))
-    response = ser.read_until(bytes.fromhex('04 03 02 01'))
-    if int.from_bytes(response[8:10], byteorder='little', signed=False)==0:
-        return True
-    else:
-        return False
-
-def close_engineering_mode(ser:serial.Serial)->bool:
-    '''
-    Close engineering mode
-    Parameters:
-    - ser (serial.Serial): the serial port object
-    Returns:
-    - success (bool): True if the engineering mode was successfully closed, False otherwise
-    '''
-    ser.write(bytes.fromhex('FD FC FB FA 02 00 63 00 04 03 02 01'))
-    response = ser.read_until(bytes.fromhex('04 03 02 01'))
-    if int.from_bytes(response[8:10], byteorder='little', signed=False)==0:
-        return True
-    else:
-        return False
