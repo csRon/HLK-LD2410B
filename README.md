@@ -42,5 +42,5 @@ dmesg | grep tty
 ## Notes and Disclaimer
 - Currently only the serial protocol for basic mode is implemented and not the engineering mode.
 - Not all commands of of the documentation are implemented yet (2.2.3, 2.2.4, 2.2.7, 2.2.8, 2.2.9, 2.2.10, 2.2.11, 2.2.12 and 2.2.13 are missing)
-- Not all messages are received properly. I don't know the reason but the end of frame message is varying sometimes and therefore cannot be filtered. 
+- Not all messages are received properly via UART. The most significant bit (MSB) is sometimes often set to 1 (e.g. 0x80 instead of 0x00). This is not handled in this implementation and can lead to wrong results or wrongly interpreted responses.
 - There seems to be some outliers in the data which are not filtered in this implementation
