@@ -41,7 +41,7 @@ def enable_configuration_mode(ser:serial.Serial)->bool:
 
     response = send_command(ser, intra_frame_length, command_word, command_value)
     success_int = int.from_bytes(response[8:10], byteorder='little', signed=True)
-    if success_int==0 or success_int==128 or success_int==32896 or success_int==32928:
+    if success_int==0:
         return True
     else:
         return False
